@@ -1,4 +1,8 @@
 
+using KDWalks.API.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
+
 namespace KDWalks.API
 {
     public class Program
@@ -13,6 +17,9 @@ namespace KDWalks.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddDbContext<KDWalksDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("KDWalks")));
+
 
             var app = builder.Build();
 
@@ -25,7 +32,7 @@ namespace KDWalks.API
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            app.UseAuthorization();  
 
 
             app.MapControllers();
