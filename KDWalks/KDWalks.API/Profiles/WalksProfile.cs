@@ -8,16 +8,13 @@ namespace KDWalks.API.Profiles
     {
         public WalksProfile()
         {
-            // Domain ↔ DTO
+            // Walk
             CreateMap<Walk, WalkDto>().ReverseMap();
-
-            // POST
             CreateMap<AddWalkRequest, Walk>();
-
-            // PUT  ✅ THIS FIXES THE 500 ERROR
             CreateMap<UpdateWalkRequest, Walk>();
 
-            // Walk Difficulty
+            // Walk Difficulty  ✅ THIS WAS MISSING
+            CreateMap<AddWalkDifficultyRequest, WalkDifficulty>();
             CreateMap<WalkDifficulty, WalkDifficultyDto>().ReverseMap();
         }
     }
