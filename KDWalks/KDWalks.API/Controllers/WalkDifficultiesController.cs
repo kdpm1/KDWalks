@@ -46,61 +46,107 @@ namespace KDWalks.API.Controllers
 
             return Ok(walkDifficultyDto);
         }
+
+        // POST: /api/walkdifficulties
         [HttpPost]
         public async Task<IActionResult> AddWalkDifficulty(
             [FromBody] AddWalkDifficultyRequest addWalkDifficultyRequestDto)
         {
+            // ✅ Validation
+            if (!ValidateAddOrUpdateWalkDifficulty(addWalkDifficultyRequestDto))
+            {
+                return BadRequest(ModelState);
+            }
+
             // Convert DTO to Domain Model
             var walkDifficultyDomain =
                 mapper.Map<Models.Domain.WalkDifficulty>(addWalkDifficultyRequestDto);
+
             // Pass details to Repository
             walkDifficultyDomain =
                 await walkDifficultyRepository.AddAsync(walkDifficultyDomain);
+
             // Convert back to DTO
             var walkDifficultyDto =
                 mapper.Map<WalkDifficultyDto>(walkDifficultyDomain);
-            // Return response
+
             return CreatedAtAction(
                 nameof(GetWalkDifficultyById),
                 new { id = walkDifficultyDto.Id },
                 walkDifficultyDto);
         }
-        [HttpPut]
-        [Route("{id:guid}")]
+
+        // PUT: /api/walkdifficulties/{id}
+        [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateWalkDifficulty(
             [FromRoute] Guid id,
             [FromBody] AddWalkDifficultyRequest updateWalkDifficultyRequestDto)
         {
+            // ✅ Validation
+            if (!ValidateAddOrUpdateWalkDifficulty(updateWalkDifficultyRequestDto))
+            {
+                return BadRequest(ModelState);
+            }
+
             // Convert DTO to Domain Model
             var walkDifficultyDomain =
                 mapper.Map<Models.Domain.WalkDifficulty>(updateWalkDifficultyRequestDto);
+
             walkDifficultyDomain.Id = id;
+
             // Pass details to Repository
             walkDifficultyDomain =
                 await walkDifficultyRepository.UpdateAsync(walkDifficultyDomain);
-            // Handle null (not found)
+
             if (walkDifficultyDomain == null)
             {
                 return NotFound();
             }
+
             // Convert back to DTO
             var walkDifficultyDto =
                 mapper.Map<WalkDifficultyDto>(walkDifficultyDomain);
-            // Return response
+
             return Ok(walkDifficultyDto);
         }
-        [HttpDelete]
-        [Route("{id:guid}")]
+
+        // DELETE: /api/walkdifficulties/{id}
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteWalkDifficulty([FromRoute] Guid id)
         {
             var walkDifficultyDomain = await walkDifficultyRepository.DeleteAsync(id);
+
             if (walkDifficultyDomain == null)
             {
                 return NotFound();
             }
+
             var walkDifficultyDto =
                 mapper.Map<WalkDifficultyDto>(walkDifficultyDomain);
+
             return Ok(walkDifficultyDto);
         }
+
+        #region Private Methods
+
+        private bool ValidateAddOrUpdateWalkDifficulty(AddWalkDifficultyRequest request)
+        {
+            if (request == null)
+            {
+                ModelState.AddModelError(nameof(request),
+                    "Walk Difficulty data is required.");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Code))
+            {
+                ModelState.AddModelError(nameof(request.Code),
+                    "Code is required.");
+            }
+
+            return ModelState.ErrorCount == 0;
+        }
+
+        #endregion
     }
 }

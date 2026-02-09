@@ -103,6 +103,31 @@ namespace KDWalks.API.Controllers
             var walkDto = mapper.Map<WalkDto>(deletedWalk);
             return Ok(walkDto);
         }
+        #region Private Methods
+        private bool ValidateAddWalkAsync(AddWalkRequest addWalkRequest)
+        {
+            if (addWalkRequest == null)
+            {
+                ModelState.AddModelError(nameof(addWalkRequest),
+                    $"Add Walk Data is required.");
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(addWalkRequest.Name))
+            {
+                ModelState.AddModelError(nameof(addWalkRequest.Name),
+                    $"Name cannot be null or empty or white space.");
+            }
+            if (addWalkRequest.Length <= 0)
+            {
+                ModelState.AddModelError(nameof(addWalkRequest.Length),
+                    $"Length should be greater than zero.");
+            }
+            return ModelState.ErrorCount == 0;
+        }
 
+
+        #endregion
     }
+
 }
+

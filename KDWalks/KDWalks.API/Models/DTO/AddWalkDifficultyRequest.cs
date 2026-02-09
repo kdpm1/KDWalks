@@ -2,6 +2,6 @@
 {
     public class AddWalkDifficultyRequest
     {
-        public string code { get; set; }
+        public string Code { get; set; }
     }
 }
