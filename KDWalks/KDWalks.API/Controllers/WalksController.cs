@@ -2,6 +2,7 @@
 using KDWalks.API.Models.Domain;
 using KDWalks.API.Models.DTO;
 using KDWalks.API.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KDWalks.API.Controllers
@@ -21,16 +22,17 @@ namespace KDWalks.API.Controllers
 
         // GET: /api/walks
         [HttpGet]
+        [Authorize(Roles = "reader")]
         public async Task<IActionResult> GetAllWalksAsync()
         {
             var walksDomain = await walkRepository.GetAllAsync();
             var walksDto = mapper.Map<List<WalkDto>>(walksDomain);
-
             return Ok(walksDto);
         }
 
         // GET: /api/walks/{id}
         [HttpGet("{id:guid}")]
+        [Authorize(Roles = "reader")]
         public async Task<IActionResult> GetWalkAsync([FromRoute] Guid id)
         {
             var walkDomain = await walkRepository.GetAsync(id);
@@ -46,13 +48,11 @@ namespace KDWalks.API.Controllers
 
         // POST: /api/walks
         [HttpPost]
+        [Authorize(Roles = "writer")]
         public async Task<IActionResult> AddWalkAsync(
             [FromBody] AddWalkRequest addWalkRequest)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            // ✅ FluentValidation runs automatically here
 
             var walkDomain = mapper.Map<Walk>(addWalkRequest);
             walkDomain = await walkRepository.AddAsync(walkDomain);
@@ -62,20 +62,17 @@ namespace KDWalks.API.Controllers
             return CreatedAtAction(
                 nameof(GetWalkAsync),
                 new { id = walkDto.Id },
-                walkDto
-            );
+                walkDto);
         }
 
         // PUT: /api/walks/{id}
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "writer")]
         public async Task<IActionResult> UpdateWalkAsync(
             [FromRoute] Guid id,
             [FromBody] UpdateWalkRequest updateWalkRequest)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            // ✅ FluentValidation runs automatically here
 
             var walkDomain = mapper.Map<Walk>(updateWalkRequest);
             walkDomain.Id = id;
@@ -90,44 +87,21 @@ namespace KDWalks.API.Controllers
             var walkDto = mapper.Map<WalkDto>(updatedWalk);
             return Ok(walkDto);
         }
+
         // DELETE: /api/walks/{id}
-        [HttpDelete]
-        [Route("{id:guid}")]
+        [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "writer")]
         public async Task<IActionResult> DeleteWalkAsync([FromRoute] Guid id)
         {
             var deletedWalk = await walkRepository.DeleteAsync(id);
+
             if (deletedWalk == null)
             {
                 return NotFound();
             }
+
             var walkDto = mapper.Map<WalkDto>(deletedWalk);
             return Ok(walkDto);
         }
-        #region Private Methods
-        private bool ValidateAddWalkAsync(AddWalkRequest addWalkRequest)
-        {
-            if (addWalkRequest == null)
-            {
-                ModelState.AddModelError(nameof(addWalkRequest),
-                    $"Add Walk Data is required.");
-                return false;
-            }
-            if (string.IsNullOrWhiteSpace(addWalkRequest.Name))
-            {
-                ModelState.AddModelError(nameof(addWalkRequest.Name),
-                    $"Name cannot be null or empty or white space.");
-            }
-            if (addWalkRequest.Length <= 0)
-            {
-                ModelState.AddModelError(nameof(addWalkRequest.Length),
-                    $"Length should be greater than zero.");
-            }
-            return ModelState.ErrorCount == 0;
-        }
-
-
-        #endregion
     }
-
 }
-

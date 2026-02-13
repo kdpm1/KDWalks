@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using KDWalks.API.Models.DTO;
 using KDWalks.API.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KDWalks.API.Controllers
@@ -22,6 +23,7 @@ namespace KDWalks.API.Controllers
 
         // GET: /api/walkdifficulties
         [HttpGet]
+        [Authorize(Roles = "reader")]
         public async Task<IActionResult> GetAllDifficulties()
         {
             var walkDifficultiesDomain = await walkDifficultyRepository.GetAllAsync();
@@ -32,6 +34,7 @@ namespace KDWalks.API.Controllers
 
         // GET: /api/walkdifficulties/{id}
         [HttpGet("{id:guid}")]
+        [Authorize(Roles = "reader")]
         public async Task<IActionResult> GetWalkDifficultyById([FromRoute] Guid id)
         {
             var walkDifficultyDomain = await walkDifficultyRepository.GetAsync(id);
@@ -49,24 +52,18 @@ namespace KDWalks.API.Controllers
 
         // POST: /api/walkdifficulties
         [HttpPost]
+        [Authorize(Roles = "writer")]
         public async Task<IActionResult> AddWalkDifficulty(
             [FromBody] AddWalkDifficultyRequest addWalkDifficultyRequestDto)
         {
-            // ✅ Validation
-            if (!ValidateAddOrUpdateWalkDifficulty(addWalkDifficultyRequestDto))
-            {
-                return BadRequest(ModelState);
-            }
+            // ✅ FluentValidation runs automatically here
 
-            // Convert DTO to Domain Model
             var walkDifficultyDomain =
                 mapper.Map<Models.Domain.WalkDifficulty>(addWalkDifficultyRequestDto);
 
-            // Pass details to Repository
             walkDifficultyDomain =
                 await walkDifficultyRepository.AddAsync(walkDifficultyDomain);
 
-            // Convert back to DTO
             var walkDifficultyDto =
                 mapper.Map<WalkDifficultyDto>(walkDifficultyDomain);
 
@@ -78,23 +75,18 @@ namespace KDWalks.API.Controllers
 
         // PUT: /api/walkdifficulties/{id}
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "writer")]
         public async Task<IActionResult> UpdateWalkDifficulty(
             [FromRoute] Guid id,
-            [FromBody] AddWalkDifficultyRequest updateWalkDifficultyRequestDto)
+            [FromBody] UpdateWalkDifficultyRequest updateWalkDifficultyRequestDto)
         {
-            // ✅ Validation
-            if (!ValidateAddOrUpdateWalkDifficulty(updateWalkDifficultyRequestDto))
-            {
-                return BadRequest(ModelState);
-            }
+            // ✅ FluentValidation runs automatically here
 
-            // Convert DTO to Domain Model
             var walkDifficultyDomain =
                 mapper.Map<Models.Domain.WalkDifficulty>(updateWalkDifficultyRequestDto);
 
             walkDifficultyDomain.Id = id;
 
-            // Pass details to Repository
             walkDifficultyDomain =
                 await walkDifficultyRepository.UpdateAsync(walkDifficultyDomain);
 
@@ -103,7 +95,6 @@ namespace KDWalks.API.Controllers
                 return NotFound();
             }
 
-            // Convert back to DTO
             var walkDifficultyDto =
                 mapper.Map<WalkDifficultyDto>(walkDifficultyDomain);
 
@@ -112,6 +103,7 @@ namespace KDWalks.API.Controllers
 
         // DELETE: /api/walkdifficulties/{id}
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "writer")]
         public async Task<IActionResult> DeleteWalkDifficulty([FromRoute] Guid id)
         {
             var walkDifficultyDomain = await walkDifficultyRepository.DeleteAsync(id);
@@ -126,27 +118,5 @@ namespace KDWalks.API.Controllers
 
             return Ok(walkDifficultyDto);
         }
-
-        #region Private Methods
-
-        private bool ValidateAddOrUpdateWalkDifficulty(AddWalkDifficultyRequest request)
-        {
-            if (request == null)
-            {
-                ModelState.AddModelError(nameof(request),
-                    "Walk Difficulty data is required.");
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(request.Code))
-            {
-                ModelState.AddModelError(nameof(request.Code),
-                    "Code is required.");
-            }
-
-            return ModelState.ErrorCount == 0;
-        }
-
-        #endregion
     }
 }
